@@ -47,11 +47,31 @@ function submit_form() {
   })
 }
 
-function load_mailbox(mailbox) {  
+async function load_mailbox(mailbox) {  
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
 
   // Show the mailbox name
   document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  
+  // Show email cards
+  const emails = await fetch('/emails/' + mailbox)
+  .then(response => response.json())
+  emails.forEach(email => {
+    console.log(email);
+    const element = document.createElement('div');
+    element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"]}</p> <a href="#" class="stretched-link"></a> </div>`;
+    element.className = "card my-3";
+    element.addEventListener('click', () => load_email(email["id"]))
+    document.querySelector('#emails-view').append(element);
+  });
+}
+
+async function load_email(email_id) {
+  fetch(`/emails/${email_id}`)
+  .then(response => response.json())
+  .then(email => {
+    console.log(email);
+  });
 }

@@ -1,3 +1,8 @@
 textarea {
     min-height: 400px;
 }
+.card:hover {
+    /* border: solid; */
+    border-color: #202122;
+    background-color: #f4f3f3;
+}
