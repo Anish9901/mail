@@ -24,7 +24,7 @@ function compose_email() {
     event.preventDefault()
     //console.log(event);
     submit_form();
-    load_mailbox('sent')
+    load_mailbox('sent');
   });
 }
 
@@ -38,7 +38,8 @@ function submit_form() {
     body: JSON.stringify({
       recipients: recipients,
       subject: subject,
-      body: body
+      body: body,
+      read: false
     })
   })
   .then(response => response.json())
@@ -59,19 +60,30 @@ async function load_mailbox(mailbox) {
   const emails = await fetch('/emails/' + mailbox)
   .then(response => response.json())
   emails.forEach(email => {
-    console.log(email);
     const element = document.createElement('div');
-    element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"]}</p> <a href="#" class="stretched-link"></a> </div>`;
+    element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"].length > 256 ? email["body"].slice(0, 256) + "..." : email["body"]}</p> </div>`;
     element.className = "card my-3";
-    element.addEventListener('click', () => load_email(email["id"]))
+    // console.log(email["read"]);
+    // email["read"] ? element.style.backgroundColor = "black": element.style.backgroundColor = "white";
     document.querySelector('#emails-view').append(element);
+    element.addEventListener('click', () => load_email(email["id"]))
   });
 }
 
 async function load_email(email_id) {
-  fetch(`/emails/${email_id}`)
-  .then(response => response.json())
-  .then(email => {
-    console.log(email);
-  });
+  const email_json = await fetch(`/emails/${email_id}`)
+  .then(response => response.json());
+  console.log(email_json);
+  document.querySelector('#emails-view').innerHTML = `
+  <h3> ${email_json["subject"]} </h3>
+  <p> <b> From: </b> ${email_json["sender"]}
+  <br>
+  <b> To: </b> ${email_json["recipients"]}
+  <br>
+  <b> Date: </b> ${email_json["timestamp"]}
+  <br>
+  <b> Subject: </b> ${email_json["subject"]} </p>
+  <br>
+  <p> ${email_json["body"]} </p>
+  `;
 }
