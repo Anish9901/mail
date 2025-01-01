@@ -22,7 +22,6 @@ function compose_email() {
   const form = document.querySelector('#compose-form')
   form.addEventListener('submit', (event) => {
     event.preventDefault()
-    //console.log(event);
     submit_form();
     load_mailbox('sent');
   });
@@ -32,7 +31,7 @@ function submit_form() {
   const recipients = document.querySelector('#compose-recipients').value;
   const subject = document.querySelector('#compose-subject').value;
   const body = document.querySelector('#compose-body').value
-  // console.log(recipients, subject, body);
+
   fetch('/emails', {
     method: 'POST',
     body: JSON.stringify({
@@ -63,8 +62,8 @@ async function load_mailbox(mailbox) {
     const element = document.createElement('div');
     element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"].length > 256 ? email["body"].slice(0, 256) + "..." : email["body"]}</p> </div>`;
     element.className = "card my-3";
-    // console.log(email["read"]);
-    // email["read"] ? element.style.backgroundColor = "black": element.style.backgroundColor = "white";
+    // console.log(email);
+    element.style.backgroundColor = email["read"] ? "#b7f2af" : element.style.backgroundColor;
     document.querySelector('#emails-view').append(element);
     element.addEventListener('click', () => load_email(email["id"]))
   });
@@ -86,4 +85,12 @@ async function load_email(email_id) {
   <br>
   <p> ${email_json["body"]} </p>
   `;
+
+  // Mark the email as read once they are opened
+  fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      read: true
+    })
+  })
 }
