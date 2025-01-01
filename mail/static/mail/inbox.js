@@ -95,6 +95,7 @@ async function load_email(email_id, mailbox) {
   `;
 
   if (mailbox !== 'sent') {
+    // Archive & Unarchive emails
     const archive_btn_html = `<button class="btn btn-primary float-right" id="archive-btn">Archive</button>`
     document.querySelector('#emails-view').innerHTML = archive_btn_html + document.querySelector('#emails-view').innerHTML;
     const archive_btn = document.querySelector('#archive-btn');
@@ -114,6 +115,7 @@ async function load_email(email_id, mailbox) {
 }
 
 async function archive_email(email_id, current_state) {
+  // Marks emails as archived or unarchived
   await fetch(`/emails/${email_id}`, {
     method: 'PUT',
     body: JSON.stringify({
