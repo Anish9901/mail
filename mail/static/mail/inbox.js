@@ -44,9 +44,6 @@ async function submit_form() {
     })
   })
   .then(response => response.json())
-  .then(result => {
-    console.log(result);
-  })
 }
 
 async function load_mailbox(mailbox) {  
@@ -79,9 +76,9 @@ async function load_mailbox(mailbox) {
 async function load_email(email_id, mailbox) {
   const email_json = await fetch(`/emails/${email_id}`)
   .then(response => response.json());
-  console.log(email_json);
 
-  document.querySelector('#emails-view').innerHTML = `
+  var email_view = document.querySelector('#emails-view');
+  email_view.innerHTML = `
   <h3> ${email_json["subject"]} </h3>
   <p> <b> From: </b> ${email_json["sender"]}
   <br>
@@ -91,19 +88,24 @@ async function load_email(email_id, mailbox) {
   <br>
   <b> Subject: </b> ${email_json["subject"]} </p>
   <br>
-  <p> ${email_json["body"]} </p>
+  <p style = "white-space: pre-wrap;">${email_json["body"]}</p>
+  <button class="btn btn-primary float-left" id="reply-btn">Reply</button>
   `;
 
   if (mailbox !== 'sent') {
     // Archive & Unarchive emails
     const archive_btn_html = `<button class="btn btn-primary float-right" id="archive-btn">Archive</button>`
-    document.querySelector('#emails-view').innerHTML = archive_btn_html + document.querySelector('#emails-view').innerHTML;
+    email_view.innerHTML = archive_btn_html + email_view.innerHTML;
     const archive_btn = document.querySelector('#archive-btn');
     if (email_json['archived'] === true) {
       archive_btn.innerHTML = 'Unarchive';
     }
     archive_btn.addEventListener('click', () => archive_email(email_id, email_json['archived']));
   }
+
+  // Reply event handler
+  const reply_btn = document.querySelector('#reply-btn');
+  reply_btn.addEventListener('click', () => reply(email_json));
 
   // Mark the email as read once they are opened
   fetch(`/emails/${email_id}`, {
@@ -123,4 +125,11 @@ async function archive_email(email_id, current_state) {
     })
   })
   await load_mailbox('inbox');
+}
+
+async function reply(email_json) {
+  compose_email();
+  document.querySelector('#compose-recipients').value = email_json['sender'];
+  document.querySelector('#compose-subject').value = email_json['subject'].startsWith('Re: ') ? email_json['subject'] : 'Re: ' + email_json['subject'];
+  document.querySelector('#compose-body').value = "On " + email_json['timestamp'] + ' ' + email_json['sender'] + " wrote: " + email_json['body'];
 }
