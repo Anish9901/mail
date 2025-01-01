@@ -63,18 +63,24 @@ async function load_mailbox(mailbox) {
 
   emails.forEach(email => {
     const element = document.createElement('div');
-    element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"].length > 256 ? email["body"].slice(0, 256) + "..." : email["body"]}</p> </div>`;
+    element.innerHTML = `
+    <div class="card-body table-hover">
+      <h5 class="card-title">${email["sender"]}</h5>
+      <h6 class="card-text">${email["subject"]}</h6>
+      <p class="card-text">${email["body"].length > 256 ? email["body"].slice(0, 256) + "..." : email["body"]}</p>
+    </div>`;
     element.className = "card my-3";
     element.style.backgroundColor = email["read"] ? "#b7f2af" : element.style.backgroundColor;
     document.querySelector('#emails-view').append(element);
-    element.addEventListener('click', () => load_email(email["id"]))
+    element.addEventListener('click', () => load_email(email["id"], mailbox))
   });
 }
 
-async function load_email(email_id) {
+async function load_email(email_id, mailbox) {
   const email_json = await fetch(`/emails/${email_id}`)
   .then(response => response.json());
   console.log(email_json);
+
   document.querySelector('#emails-view').innerHTML = `
   <h3> ${email_json["subject"]} </h3>
   <p> <b> From: </b> ${email_json["sender"]}
@@ -88,6 +94,16 @@ async function load_email(email_id) {
   <p> ${email_json["body"]} </p>
   `;
 
+  if (mailbox !== 'sent') {
+    const archive_btn_html = `<button class="btn btn-primary float-right" id="archive-btn">Archive</button>`
+    document.querySelector('#emails-view').innerHTML = archive_btn_html + document.querySelector('#emails-view').innerHTML;
+    const archive_btn = document.querySelector('#archive-btn');
+    if (email_json['archived'] === true) {
+      archive_btn.innerHTML = 'Unarchive';
+    }
+    archive_btn.addEventListener('click', () => archive_email(email_id, email_json['archived']));
+  }
+
   // Mark the email as read once they are opened
   fetch(`/emails/${email_id}`, {
     method: 'PUT',
@@ -95,4 +111,14 @@ async function load_email(email_id) {
       read: true
     })
   })
+}
+
+async function archive_email(email_id, current_state) {
+  await fetch(`/emails/${email_id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      archived: !current_state
+    })
+  })
+  await load_mailbox('inbox');
 }
