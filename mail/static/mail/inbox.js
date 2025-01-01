@@ -18,21 +18,23 @@ function compose_email() {
   document.querySelector('#compose-recipients').value = '';
   document.querySelector('#compose-subject').value = '';
   document.querySelector('#compose-body').value = '';
-  
-  const form = document.querySelector('#compose-form')
-  form.addEventListener('submit', (event) => {
-    event.preventDefault()
-    submit_form();
-    load_mailbox('sent');
-  });
+
+  const form = document.querySelector('#compose-form');
+  form.addEventListener('submit', handle_submit);
 }
 
-function submit_form() {
+async function handle_submit(event) {
+  event.preventDefault();
+  await submit_form();
+  await load_mailbox('sent');
+}
+
+async function submit_form() {
   const recipients = document.querySelector('#compose-recipients').value;
   const subject = document.querySelector('#compose-subject').value;
-  const body = document.querySelector('#compose-body').value
+  const body = document.querySelector('#compose-body').value;
 
-  fetch('/emails', {
+  await fetch('/emails', {
     method: 'POST',
     body: JSON.stringify({
       recipients: recipients,
@@ -57,12 +59,12 @@ async function load_mailbox(mailbox) {
   
   // Show email cards
   const emails = await fetch('/emails/' + mailbox)
-  .then(response => response.json())
+  .then(response => response.json());
+
   emails.forEach(email => {
     const element = document.createElement('div');
     element.innerHTML = `<div class="card-body table-hover"><h5 class="card-title">${email["sender"]}</h5> <h6 class="card-text">${email["subject"]}</h6> <p class="card-text">${email["body"].length > 256 ? email["body"].slice(0, 256) + "..." : email["body"]}</p> </div>`;
     element.className = "card my-3";
-    // console.log(email);
     element.style.backgroundColor = email["read"] ? "#b7f2af" : element.style.backgroundColor;
     document.querySelector('#emails-view').append(element);
     element.addEventListener('click', () => load_email(email["id"]))
